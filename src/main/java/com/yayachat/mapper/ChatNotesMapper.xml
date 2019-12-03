@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yayachat.mapper.ChatNotesMapper">
+
+    <insert id="insertChatNotes" parameterType="chat">
+        insert into chat_notes(user_send_id,user_receive_id,content,state,create_time,message_type)
+        VALUES (#{userSendId},#{userReceiveId},#{content},#{state},#{createTime},#{messageType})
+    </insert>
+
+    <insert id="batchInsertChatNotes" parameterType="java.util.List">
+        insert into chat_notes(user_send_id,user_receive_id,content,state,create_time,message_type)
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.userSendId},#{item.userReceiveId},#{item.content},#{item.state},#{item.createTime},#{item.messageType})
+        </foreach>
+    </insert>
+
+    <select id="findOnePeopleploChatNotesNumber" parameterType="java.lang.Integer" resultType="ChatNotice">
+       select t1.user_receive_id as sourceClientId,t1.user_send_id as targetClientId, count(t1.id) as num,t2.content as msg,t2.message_type as messageType,t2.create_time as dateTime
+         from chat_notes as t1,
+        (select content,user_send_id,message_type,create_time from chat_notes as ts2 where user_receive_id = #{userReceiveId} and (state=1 or state =2) and id IN
+         (select max(id) from chat_notes where user_receive_id = #{userReceiveId} GROUP BY user_send_id)
+        ) as t2
+         where user_receive_id = #{userReceiveId} and (state=1 or state =2) and t1.user_send_id = t2.user_send_id
+         GROUP BY t1.user_send_id
+
+    </select>
+
+    <select id="findChatNotesNumber" parameterType="java.lang.Integer" resultType="Integer">
+        select count(id) from chat_notes where
+           user_receive_id = #{userReceiveId}  and (state=1 or state =2)
+    </select>
+
+    <select id="findChatnotes" parameterType="Chat" resultType="Chat">
+        select id,user_send_id as userSendId,user_receive_id as userReceiveId,content,state,create_time as createTime,message_type as messageType
+        from chat_notes
+        where user_send_id =#{userSendId} and user_receive_id = #{userReceiveId} and state =#{state}
+    </select>
+
+    <select id="findChatnotes2" parameterType="Chat" resultType="Chat">
+        select id,user_send_id as userSendId,user_receive_id as userReceiveId,content,state,create_time as createTime,message_type as messageType
+        from chat_notes
+        where user_send_id =#{userSendId} and user_receive_id = #{userReceiveId} and (state =1 or state=2)
+    </select>
+
+    <!--更新未发送信息状态为已发送-->
+    <update id="upadteChatNotes" parameterType="Chat">
+        update chat_notes set
+        <trim prefix=" " suffix=" " suffixOverrides=",">
+<!--            <if test="createTime !=null">`chat_notes`.create_time=#{createTime},</if>-->
+<!--            <if test="content !=null">`chat_notes`.content=#{content},</if>-->
+            <if test="state !=null">`chat_notes`.state=#{state},</if>
+        </trim>
+        where user_send_id =#{userSendId} and user_receive_id = #{userReceiveId} and (state = 2 or state=1)
+    </update>
+</mapper>

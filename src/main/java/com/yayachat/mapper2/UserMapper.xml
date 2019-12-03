@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.yayachat.mapper2.UserMapper">
+
+  <select id="findChatUserMsgs" parameterType="java.lang.Integer" resultType="ChatUserMsg">
+                SELECT user_id as userId, ud.avatar_src_url as avatarSrc,u.user_name as userName
+                from  user u,user_detail as ud where ud.user_id=u.id and ud.user_id in
+                      <foreach collection="list" item="item" index="index" open="(" close=")" separator=",">
+
+                          #{item}
+
+                      </foreach>
+
+  </select>
+    <select id="findWaitAgreeContactsNum" parameterType="java.lang.Integer" resultType="java.lang.Integer">
+       select count(ccm.id) as num
+        from address_book ccm
+        where  ccm.contact_id = #{userId} and ccm.state=1
+    </select>
+</mapper>
